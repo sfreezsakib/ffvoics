@@ -1,0 +1,44 @@
+name: Build APK from ZIP
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          ZIP=$(find . -maxdepth 2 -name '*.zip' -not -path './_src/*' | head -n1)
+          echo "Using zip: $ZIP"
+          mkdir _src
+          unzip -q "$ZIP" -d _src
+          SETTINGS=$(find _src -name settings.gradle -print -quit)
+          echo "PROJ=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK
+        run: cd "$PROJ" && gradle assembleDebug --no-daemon
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp "$PROJ"/app/build/outputs/apk/debug/*.apk out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FFVoicePrank-apk
+          path: out/*.apk
