@@ -41,5 +41,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: FFVoicePrank-apk
+          name: IS-FF-VOICE-apk
           path: out/*.apk
